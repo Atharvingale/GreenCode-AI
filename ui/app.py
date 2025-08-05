@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 
 # Configuration and Setup
-API_URL = "http://127.0.0.1:8000"
+API_URL = "https://greencode-ai.onrender.com"
 
 st.set_page_config(
     page_title="GreenCode AI",
