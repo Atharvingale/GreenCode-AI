@@ -1,28 +1,34 @@
 import os
-import openai
-import yaml
 import json
 import gc
 import psutil
-from app.core.retriever import retrieve_chunks
+
+# Lazy import helper
+def lazy_import(module_name, attr_name=None):
+    """Lazy import to reduce memory usage"""
+    def _import():
+        module = __import__(module_name, fromlist=[attr_name] if attr_name else [])
+        return getattr(module, attr_name) if attr_name else module
+    return _import
 
 # Memory monitoring
 def check_memory_usage():
     process = psutil.Process()
     memory_info = process.memory_info()
-    if memory_info.rss > 450 * 1024 * 1024:  # 450MB threshold
+    if memory_info.rss > 350 * 1024 * 1024:  # 350MB threshold (aggressive)
         gc.collect()
         return True
     return False
 
-# Load from config file or environment variables
-try:
-    with open("config/config.yaml") as f:
-        cfg = yaml.safe_load(f)
-    openai.api_key = cfg["openai_api_key"]
-except:
-    # Fallback to environment variables
-    openai.api_key = os.environ.get("openai_api_key")
+# Load API key lazily
+def get_api_key():
+    try:
+        import yaml
+        with open("config/config.yaml") as f:
+            cfg = yaml.safe_load(f)
+        return cfg.get("openai_api_key", os.environ.get("openai_api_key"))
+    except:
+        return os.environ.get("openai_api_key")
 
 COT = """
 You are a claims evaluation assistant. You are provided with:
@@ -53,63 +59,62 @@ Retrieved Clauses:
 """
 
 def evaluate_decision(query, session_id):
+    """Ultra memory-efficient decision evaluation"""
     try:
-        # Limit query length
-        query = query[:1000]  # Limit to 1000 characters
+        # Lazy imports
+        retrieve_chunks = lazy_import('app.core.retriever', 'retrieve_chunks')()
+        openai = lazy_import('openai')()
         
-        # Get relevant chunks with memory check
+        # Ultra-strict limits
+        query = query[:100]  # Severe query truncation
+        
+        # Get chunks with minimal memory
         retrieved_chunks = retrieve_chunks(query, session_id)
         
-        # Limit number of chunks and their size
-        retrieved_chunks = retrieved_chunks[:3]  # Limit to top 3 chunks
-        clauses = "\n\n".join(chunk[:1000] for chunk in retrieved_chunks)  # Limit each chunk to 1000 chars
+        # Drastic chunk limits
+        retrieved_chunks = retrieved_chunks[:1]  # Only 1 chunk
+        clauses = "\n".join(chunk[:200] for chunk in retrieved_chunks)  # 200 chars max
         
-        # Format prompt
-        prompt = COT.format(query=query, clauses=clauses)
+        # Compact prompt
+        prompt = f"Query: {query}\nPolicy: {clauses}\nReturn JSON: {{\"decision\":\"approved/rejected\",\"justification\":\"brief\"}}"
         
-        # Check memory before API call
+        # Check memory aggressively
         check_memory_usage()
         
+        # Configure OpenAI
+        openai.api_key = get_api_key()
+        
+        # Minimal API call
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.2,
-            max_tokens=500  # Limit response length
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            max_tokens=50  # Extremely limited response
         )
         
-        raw_output = response['choices'][0]['message']['content'].strip()
-        parsed_output = json.loads(raw_output)
+        # Parse minimal response
+        content = response['choices'][0]['message']['content'].strip()
+        try:
+            parsed = json.loads(content)
+        except:
+            parsed = {"decision": "error", "justification": "parse failed"}
         
+        # Minimal result
         result = {
-            "query": query,
-            "response": parsed_output,
-            "retrieved_clauses": retrieved_chunks
+            "decision": parsed.get("decision", "error"),
+            "justification": parsed.get("justification", "")[:100]
         }
         
-        # Clear variables
-        del response
-        del raw_output
-        del parsed_output
-        gc.collect()
+        # Ultra cleanup
+        del response, content, parsed, retrieved_chunks
+        for _ in range(2):
+            gc.collect()
         
         return result
 
-    except json.JSONDecodeError as e:
-        return {
-            "query": query,
-            "response": {"error": "Invalid JSON response from GPT"},
-            "retrieved_clauses": retrieved_chunks[:3]  # Limit chunks in error response
-        }
     except Exception as e:
-        return {
-            "query": query,
-            "response": {"error": str(e)},
-            "retrieved_clauses": []
-        }
+        gc.collect()
+        return {"decision": "error", "justification": str(e)[:50]}
     finally:
-        # Ensure cleanup
         gc.collect()
         check_memory_usage()

@@ -5,14 +5,21 @@ import pickle
 import yaml
 import gc
 import psutil
-from app.core.embedder import embed_texts
 from datetime import datetime
+
+# Lazy import helper
+def lazy_import(module_name, attr_name=None):
+    """Lazy import to reduce memory usage"""
+    def _import():
+        module = __import__(module_name, fromlist=[attr_name] if attr_name else [])
+        return getattr(module, attr_name) if attr_name else module
+    return _import
 
 # Memory monitoring
 def check_memory_usage():
     process = psutil.Process()
     memory_info = process.memory_info()
-    if memory_info.rss > 450 * 1024 * 1024:  # 450MB threshold
+    if memory_info.rss > 350 * 1024 * 1024:  # 350MB threshold (aggressive)
         gc.collect()
         return True
     return False
@@ -45,29 +52,28 @@ def normalize_embeddings(vectors):
     norms = np.linalg.norm(vectors, axis=1, keepdims=True)
     return vectors / norms
 
-def build_index(text_chunks, session_id, force_rebuild=False, batch_size=100):
+def build_index(text_chunks, session_id, force_rebuild=False, batch_size=25):
+    """Ultra memory-efficient index building"""
     paths = get_paths(session_id)
     INDEX_PATH = paths["INDEX_PATH"]
     META_PATH = paths["META_PATH"]
     os.makedirs(os.path.dirname(INDEX_PATH), exist_ok=True)
 
     if os.path.exists(INDEX_PATH) and os.path.exists(META_PATH) and not force_rebuild:
-        print("Index already exists.")
         return
 
-    print("Building FAISS index...")
-    
     try:
-        # Process in batches to manage memory
+        # Ultra-small batches
         all_chunks = []
-        for i in range(0, len(text_chunks), batch_size):
+        embed_texts = lazy_import('app.core.embedder', 'embed_texts')()
+        
+        for i in range(0, min(len(text_chunks), 1000), batch_size):  # Hard limit 1000 chunks
             batch = text_chunks[i:i + batch_size]
             
-            # Generate embeddings for batch
+            # Generate embeddings with memory cleanup
             vectors = embed_texts(batch)
             vectors = normalize_embeddings(np.array(vectors).astype("float32"))
             
-            # Initialize or add to index
             if i == 0:
                 dim = vectors.shape[1]
                 index = faiss.IndexFlatIP(dim)
@@ -75,27 +81,19 @@ def build_index(text_chunks, session_id, force_rebuild=False, batch_size=100):
             index.add(vectors)
             all_chunks.extend(batch)
             
-            # Clear batch memory
-            del vectors
-            del batch
+            # Aggressive cleanup
+            del vectors, batch
             gc.collect()
-            
-            # Check memory usage
-            if check_memory_usage():
-                print("Memory threshold reached, performing cleanup")
+            check_memory_usage()
         
-        # Save index and metadata
+        # Save with compression
         faiss.write_index(index, INDEX_PATH)
         with open(META_PATH, "wb") as f:
-            pickle.dump(all_chunks, f)
+            pickle.dump(all_chunks, f, protocol=pickle.HIGHEST_PROTOCOL)
             
-        print("FAISS index saved.")
-        
     except Exception as e:
-        print(f"Error building index: {str(e)}")
         raise
     finally:
-        # Cleanup
         if 'index' in locals():
             del index
         if 'all_chunks' in locals():
@@ -114,31 +112,34 @@ def load_index(session_id):
         chunks = pickle.load(f)
     return index, chunks
 
-def retrieve_chunks(query, session_id, k=5):
+def retrieve_chunks(query, session_id, k=2):
+    """Ultra memory-efficient chunk retrieval"""
     try:
-        # Load index and chunks with memory check
+        # Lazy import
+        embed_texts = lazy_import('app.core.embedder', 'embed_texts')()
+        
+        # Load with size limits
         index, chunks = load_index(session_id)
         
-        # Limit query length and process embedding
-        query = query[:1000]  # Limit query length
+        # Severe query limits
+        query = query[:200]  # Drastically reduce query length
+        
+        # Generate embedding
         q_vec = embed_texts([query])
         q_vec = normalize_embeddings(np.array(q_vec).astype("float32"))
         
-        # Perform search
-        _, I = index.search(q_vec, k)
-        results = [chunks[i] for i in I[0]]
+        # Search with minimal results
+        _, I = index.search(q_vec, min(k, len(chunks)))
+        results = [chunks[i][:500] for i in I[0]]  # Truncate chunks
         
-        # Clear memory
-        del q_vec
-        del index
-        del chunks
+        # Aggressive cleanup
+        del q_vec, index, chunks
         gc.collect()
         
         return results
         
     except Exception as e:
-        print(f"Error in retrieve_chunks: {str(e)}")
-        raise
+        gc.collect()
+        return []
     finally:
-        # Ensure memory cleanup
         gc.collect()
