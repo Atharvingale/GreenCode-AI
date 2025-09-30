@@ -11,8 +11,8 @@ from datetime import datetime
 import os
 
 app = FastAPI(
-    title="GreenCode AI - Legal Document Demystifier",
-    description="GreenCode AI is an intelligent legal document analysis platform that demystifies complex legal jargon for everyday people. It provides three layers of analysis: (1) Translation Layer - converts legal jargon to plain English, (2) Risk Analysis Layer - identifies unfavorable clauses and hidden traps, (3) Q&A Layer - answers specific questions about your documents. Powered by advanced AI and semantic search.",
+    title="SafeSign - Digital Document Security Platform",
+    description="SafeSign is an intelligent digital document analysis platform that provides secure document signing and analysis capabilities. It offers comprehensive document review, risk assessment, and AI-powered insights to ensure safe and informed document signing. Powered by advanced AI and semantic search.",
     version="2.0"
 )
 
@@ -38,7 +38,7 @@ class DocumentAnalysisRequest(BaseModel):
 @app.get("/")
 def root():
     return {
-        "message": "GreenCode AI - Legal Document Demystifier is live!",
+        "message": "SafeSign - Digital Document Security Platform is live!",
         "features": {
             "translation": "Convert legal jargon to plain English",
             "risk_analysis": "Identify unfavorable clauses and hidden traps",

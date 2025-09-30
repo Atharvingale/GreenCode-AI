@@ -5,12 +5,16 @@ from datetime import datetime
 import os
 import time
 import random
+import hashlib
 
 # Configuration and Setup
 API_URL = "http://127.0.0.1:8000"
 
-def generate_ai_questions(session_id):
-    """Generate AI-powered questions based on the actual document content"""
+@st.cache_data(show_spinner=False)
+def generate_ai_questions(session_id: str):
+    """Generate AI-powered questions based on the actual document content.
+    Cached per session_id to avoid repeated API calls on reruns.
+    """
     try:
         response = requests.post(
             f"{API_URL}/generate_questions",
@@ -131,8 +135,8 @@ def display_legal_analysis_result(result, analysis_type):
                 st.text(clause[:500] + "..." if len(clause) > 500 else clause)
 
 st.set_page_config(
-    page_title="🚀 GreenCode AI - Legal Document Analyzer",
-    page_icon="⚖️",
+    page_title="🔒 SafeSign - Digital Document Security",
+    page_icon="📝",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -344,8 +348,8 @@ st.markdown("""
 # Header Section
 st.markdown("""
 <div class="main-header">
-    <h1 class="hero-title">⚖️ GreenCode AI</h1>
-    <p class="hero-subtitle">Professional Legal Document Analysis Platform</p>
+    <h1 class="hero-title">🔒 SafeSign</h1>
+    <p class="hero-subtitle">Secure Digital Document Signing Platform</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -355,9 +359,9 @@ col1, col2, col3 = st.columns(3, gap="large")
 with col1:
     st.markdown("""
     <div class="feature-card">
-        <span class="feature-icon">📝</span>
-        <h3>Smart Translation</h3>
-        <p>Convert complex legal jargon into clear, understandable language that anyone can read.</p>
+        <span class="feature-icon">🔒</span>
+        <h3>Secure Signatures</h3>
+        <p>Create cryptographically secure digital signatures with enterprise-grade encryption and authentication.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -365,8 +369,8 @@ with col2:
     st.markdown("""
     <div class="feature-card">
         <span class="feature-icon">🛡️</span>
-        <h3>Risk Analysis</h3>
-        <p>Identify potential risks, unfavorable clauses, and hidden traps in your documents.</p>
+        <h3>Document Analysis</h3>
+        <p>AI-powered analysis to identify risks, verify authenticity, and ensure document integrity.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -374,8 +378,8 @@ with col3:
     st.markdown("""
     <div class="feature-card">
         <span class="feature-icon">🤖</span>
-        <h3>AI Assistant</h3>
-        <p>Get instant, accurate answers to any questions about your legal documents.</p>
+        <h3>Smart Assistant</h3>
+        <p>Get instant answers about document contents and signing requirements before you sign.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -384,39 +388,70 @@ with st.sidebar:
     st.markdown('<div class="sidebar">', unsafe_allow_html=True)
     st.markdown("### 📄 Upload Document")
     
+    # Show current session info if exists
+    if st.session_state.get("session_id"):
+        st.success(f"📁 Active session: {st.session_state['session_id'][-8:]}")
+        if st.button("🔄 Clear Session & Start Fresh", type="secondary", use_container_width=True):
+            # Clear all session state
+            keys_to_clear = ["session_id", "last_upload_hash", "ai_questions", "document_type", 
+                           "document_summary", "selected_analysis", "selected_question"]
+            for key in keys_to_clear:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.rerun()
+    
     uploaded_file = st.file_uploader(
         "Choose your legal document",
         type=["pdf", "docx"],
         help="Supported formats: PDF, DOCX"
     )
-    
-    if uploaded_file:
-        with st.spinner("Processing document..."):
-            response = requests.post(
-                f"{API_URL}/upload_docs",
-                files=[("uploaded_files", (uploaded_file.name, uploaded_file.getvalue()))]
-            )
-            
-        if response.status_code == 200:
-            data = response.json()
-            st.success("✅ Document uploaded successfully!")
-            session_id = data.get("session_id")
-            st.session_state["session_id"] = session_id
-            
-            # Generate AI questions
-            with st.spinner("🧠 Generating smart questions..."):
-                ai_questions_data = generate_ai_questions(session_id)
-            
-            if not ai_questions_data.get("error"):
-                st.session_state["ai_questions"] = ai_questions_data["questions"]
-                st.session_state["document_type"] = ai_questions_data["document_type"]
-                st.session_state["document_summary"] = ai_questions_data.get("document_summary", "")
-                st.success("🎯 Smart questions generated!")
+
+    # Process upload once per unique file content (prevents re-upload on reruns)
+    if uploaded_file is not None:
+        file_bytes = uploaded_file.getvalue()
+        file_hash = hashlib.md5(file_bytes).hexdigest()
+        last_hash = st.session_state.get("last_upload_hash")
+
+        if last_hash != file_hash:
+            with st.spinner("Processing document..."):
+                response = requests.post(
+                    f"{API_URL}/upload_docs",
+                    files=[("uploaded_files", (uploaded_file.name, file_bytes))]
+                )
+
+            if response.status_code == 200:
+                data = response.json()
+                st.success("✅ Document uploaded successfully!")
+                session_id = data.get("session_id")
+                st.session_state["session_id"] = session_id
+                st.session_state["last_upload_hash"] = file_hash
+
+                # Generate AI questions (cached per session)
+                with st.spinner("🧠 Generating smart questions..."):
+                    ai_questions_data = generate_ai_questions(session_id)
+
+                if not ai_questions_data.get("error"):
+                    st.session_state["ai_questions"] = ai_questions_data["questions"]
+                    st.session_state["document_type"] = ai_questions_data["document_type"]
+                    st.session_state["document_summary"] = ai_questions_data.get("document_summary", "")
+                    st.success("🎯 Smart questions generated!")
+                else:
+                    st.warning(f"⚠️ {ai_questions_data['error']}")
+                    st.session_state["ai_questions"] = ["What are the main terms I should understand?"]
             else:
-                st.warning(f"⚠️ {ai_questions_data['error']}")
-                st.session_state["ai_questions"] = ["What are the main terms I should understand?"]
+                st.error("❌ Failed to upload document")
         else:
-            st.error("❌ Failed to upload document")
+            st.info("ℹ️ Using the previously uploaded document. Upload a new file to reprocess.")
+    
+    # Show document information if available
+    if st.session_state.get("document_type") and st.session_state.get("ai_questions"):
+        st.markdown("---")
+        st.markdown("### 📊 Document Info")
+        st.write(f"**Type:** {st.session_state['document_type'].replace('_', ' ').title()}")
+        st.write(f"**Questions available:** {len(st.session_state['ai_questions'])}")
+        if st.session_state.get("document_summary"):
+            with st.expander("Document Summary"):
+                st.write(st.session_state["document_summary"])
     
     st.markdown("---")
     st.markdown("### ℹ️ How it works")
@@ -462,6 +497,11 @@ st.markdown("---")
 
 # Question input section
 st.markdown("### ❓ Ask Your Question")
+
+# Show helpful guidance if no document is uploaded
+if not st.session_state.get("session_id"):
+    st.warning("⚠️ Please upload a document first to enable analysis features.")
+    st.stop()
 
 if analysis_type == "qa":
     ai_questions = st.session_state.get("ai_questions", [])
@@ -530,11 +570,6 @@ if st.button("🚀 Start Analysis", type="primary", use_container_width=True):
         st.error("⚠️ Please enter a question or select an analysis type")
     else:
         with st.spinner("🔍 Analyzing your document..."):
-            progress_bar = st.progress(0)
-            for i in range(100):
-                time.sleep(0.01)
-                progress_bar.progress(i + 1)
-            
             try:
                 response = requests.post(
                     f"{API_URL}/query",
@@ -587,6 +622,6 @@ with col3:
 
 st.markdown("""
 <div style="text-align: center; margin: 2rem 0; color: #64748b;">
-    <p><strong>⚖️ GreenCode AI</strong> - Making Legal Documents Understandable</p>
+    <p><strong>🔒 SafeSign</strong> - Secure Digital Document Signing</p>
 </div>
 """, unsafe_allow_html=True)

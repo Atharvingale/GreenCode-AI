@@ -1,7 +1,7 @@
 [project]
-name = "VeriSureAI"
+name = "SafeSign"
 version = "0.1.0"
-description = "VeriSure AI is an intelligent, session-based insurance assistant that combines semantic document retrieval using FAISS with reasoning powered by Gemini 1.5 Flash. Users can upload multiple policy documents, ask natural language questions, and receive structured, justified decisions in real time. Each session is self-contained, allowing dynamic indexing, accurate clause referencing, and clean separation of uploaded contexts."
+description = "SafeSign is an intelligent digital document security platform that provides secure document signing and analysis capabilities. It offers comprehensive document review, risk assessment, and AI-powered insights to ensure safe and informed document signing. Features include document analysis, risk detection, and secure digital signatures."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

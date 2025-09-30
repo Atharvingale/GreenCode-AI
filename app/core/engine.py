@@ -24,6 +24,14 @@ else:
     MODEL_NAME = "gpt-3.5-turbo"
     print("Using OpenAI with GPT-3.5-turbo")
 
+def clean_json_response(response_text: str) -> str:
+    """Clean up AI response by removing markdown code blocks."""
+    if response_text.startswith('```json'):
+        response_text = response_text[7:]
+    if response_text.endswith('```'):
+        response_text = response_text[:-3]
+    return response_text.strip()
+
 def generate_content(prompt: str) -> str:
     """Generate content using OpenAI or OpenRouter."""
     try:
@@ -135,14 +143,7 @@ def translate_legal_jargon(clauses: List[str]) -> Dict[str, Any]:
     
     try:
         response_text = generate_content(prompt)
-        
-        # Clean up response text - remove markdown code blocks if present
-        if response_text.startswith('```json'):
-            response_text = response_text[7:]
-        if response_text.endswith('```'):
-            response_text = response_text[:-3]
-        response_text = response_text.strip()
-        
+        response_text = clean_json_response(response_text)
         return json.loads(response_text)
     except json.JSONDecodeError as e:
         return {
@@ -164,14 +165,7 @@ def analyze_document_risks(clauses: List[str], document_type: str) -> Dict[str, 
     
     try:
         response_text = generate_content(prompt)
-        
-        # Clean up response text - remove markdown code blocks if present
-        if response_text.startswith('```json'):
-            response_text = response_text[7:]
-        if response_text.endswith('```'):
-            response_text = response_text[:-3]
-        response_text = response_text.strip()
-        
+        response_text = clean_json_response(response_text)
         return json.loads(response_text)
     except json.JSONDecodeError as e:
         return {
@@ -196,14 +190,7 @@ def answer_legal_question(query: str, session_id: str) -> Dict[str, Any]:
     
     try:
         response_text = generate_content(prompt)
-        
-        # Clean up response text - remove markdown code blocks if present
-        if response_text.startswith('```json'):
-            response_text = response_text[7:]
-        if response_text.endswith('```'):
-            response_text = response_text[:-3]
-        response_text = response_text.strip()
-        
+        response_text = clean_json_response(response_text)
         return json.loads(response_text)
     except json.JSONDecodeError as e:
         return {
@@ -334,14 +321,7 @@ def generate_smart_questions(session_id: str, max_questions: int = 8) -> Dict[st
         )
         
         response_text = generate_content(prompt)
-        
-        # Clean up response text
-        if response_text.startswith('```json'):
-            response_text = response_text[7:]
-        if response_text.endswith('```'):
-            response_text = response_text[:-3]
-        response_text = response_text.strip()
-        
+        response_text = clean_json_response(response_text)
         result = json.loads(response_text)
         
         # Limit to requested number of questions

@@ -1,10 +1,10 @@
-# ⚖️ GreenCode AI - Legal Document Analyzer
+# 🔒 SafeSign - Secure Digital Document Platform
 
-## 🚀 Professional AI-Powered Legal Document Analysis Platform
+## 🚀 Professional AI-Powered Document Security and Analysis Platform
 
-**GreenCode AI** is a cutting-edge legal document analysis platform that transforms complex legal jargon into understandable language using advanced AI technology. Perfect for lawyers, businesses, and individuals who need to understand legal documents quickly and accurately.
+**SafeSign** is a cutting-edge digital document security platform that provides secure document signing and comprehensive analysis capabilities. Perfect for businesses and individuals who need secure document signing with intelligent risk assessment and analysis. 
 
-![GreenCode AI](https://img.shields.io/badge/AI-Powered-00D4AA?style=for-the-badge)
+![SafeSign](https://img.shields.io/badge/AI-Powered-00D4AA?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?style=for-the-badge&logo=python)
 ![Streamlit](https://img.shields.io/badge/Streamlit-Frontend-red?style=for-the-badge&logo=streamlit)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green?style=for-the-badge&logo=fastapi)
@@ -67,7 +67,7 @@
 
 ## 📋 Prerequisites
 
-Before setting up GreenCode AI, ensure you have:
+Before setting up SafeSign, ensure you have:
 
 - **Python 3.8+** installed on your system
 - **Git** for cloning the repository
@@ -81,19 +81,19 @@ Before setting up GreenCode AI, ensure you have:
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/greencode-ai.git
-cd greencode-ai
+git clone https://github.com/yourusername/safesign.git
+cd safesign
 ```
 
 ### 2. Create Virtual Environment
 ```bash
 # Windows
-python -m venv greencode_env
-greencode_env\Scripts\activate
+python -m venv safesign_env
+safesign_env\Scripts\activate
 
 # Mac/Linux
-python3 -m venv greencode_env
-source greencode_env/bin/activate
+python3 -m venv safesign_env
+source safesign_env/bin/activate
 ```
 
 ### 3. Install Dependencies
@@ -153,7 +153,7 @@ Open your browser and go to:
 
 ### Project Structure
 ```
-greencode-ai/
+safesign/
 ├── app/
 │   ├── core/
 │   │   ├── engine.py          # Main AI processing engine
@@ -360,9 +360,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Need help? Here's how to get support:
 
 1. **Check the [Troubleshooting](#-troubleshooting) section**
-2. **Search [existing issues](https://github.com/yourusername/greencode-ai/issues)**
-3. **Create a [new issue](https://github.com/yourusername/greencode-ai/issues/new)**
-4. **Contact via email:** support@greencode-ai.com
+2. **Search [existing issues](https://github.com/yourusername/safesign/issues)**
+3. **Create a [new issue](https://github.com/yourusername/safesign/issues/new)**
+4. **Contact via email:** support@safesign.com
 
 ---
 
@@ -379,25 +379,25 @@ Need help? Here's how to get support:
 
 <div align="center">
 
-### Made with ❤️ for the Legal Community
+### Made with ❤️ for Secure Digital Workflows
 
-**⚖️ GreenCode AI - Making Legal Documents Understandable**
+**🔒 SafeSign - Secure Digital Document Platform**
 
-[⭐ Star this repo](https://github.com/yourusername/greencode-ai) • [🐛 Report Bug](https://github.com/yourusername/greencode-ai/issues) • [✨ Request Feature](https://github.com/yourusername/greencode-ai/issues)
+[⭐ Star this repo](https://github.com/yourusername/safesign) • [🐛 Report Bug](https://github.com/yourusername/safesign/issues) • [✨ Request Feature](https://github.com/yourusername/safesign/issues)
 
 </div>
 
-# GreenCode AI - Legal Document Demystifier 🌱⚖️
+# SafeSign - Digital Document Security Platform 🔒📝
 
 ## 🚀 Overview
 
-GreenCode AI is an intelligent legal document analysis platform designed to **demystify complex legal jargon for everyday people**. The platform bridges the information asymmetry between legal experts and regular citizens by providing three powerful layers of protection:
+SafeSign is an intelligent digital document security platform designed to **provide secure document signing with comprehensive analysis capabilities**. The platform ensures document integrity and user protection by providing three powerful layers of security:
 
-1. **📝 Translation Layer** - Converts legal jargon into simple, fifth-grade reading level language
-2. **⚠️ Risk Analysis Layer** - Identifies unfavorable clauses and hidden traps that could harm you
-3. **❓ Q&A Layer** - Provides instant, contextual answers to your questions about the document
+1. **📝 Document Analysis Layer** - Analyzes document content and provides clear summaries
+2. **⚠️ Security & Risk Assessment** - Identifies potential security risks and document authenticity
+3. **🔒 Secure Signing Layer** - Provides cryptographically secure digital signatures
 
-> 🎯 **Mission:** Empowering everyone to make informed decisions by making essential legal information accessible and understandable.
+> 🎯 **Mission:** Empowering secure digital document workflows through advanced security and intelligent analysis.
 
 ---
 
@@ -562,8 +562,8 @@ The RAG Chatbot feature solves the "Where do I find..." problem. Instead of forc
 ## 👨‍💻 Team
 
 **Lead Developer**: Anand Kumar  
-**Project**: GreenCode AI - Legal Document Demystifier  
-**Mission**: Empowering everyone to understand their legal rights
+**Project**: SafeSign - Digital Document Security Platform  
+**Mission**: Empowering secure digital document workflows
 
 ---
 
@@ -575,4 +575,4 @@ The RAG Chatbot feature solves the "Where do I find..." problem. Instead of forc
 - **Email**: [anandambastha72@gmail.com](mailto:anandambastha72@gmail.com)  
 - **Project Demo**: Upload a legal document and see the magic happen!
 
-> ⚖️ **"Making legal documents accessible to everyone, one clause at a time."**
+> 🔒 **"Securing digital documents with intelligence and trust."**
